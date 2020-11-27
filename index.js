@@ -54,6 +54,7 @@ let Throttle = class {
 						if (didLock) { // New request - pass on middleware and wait until its concludes
 
 							// Callback for onUnlocked to release lock and finish queue.
+							// TODO: Use a promise instead. When it resolves the lock is released.
 							var done = () => Promise.resolve()
 								.then(() => {
 									debug('Releasing lock');
@@ -97,7 +98,7 @@ let Throttle = class {
 									debug('Add to pending');
 									//pending.unshift([req, res, next]);
 									if (_.isFunction(options.onLocked)) this.pending.unshift(options.onLocked);
-									this.pending.length = this.settings.queue;
+									if (this.pending.length > this.settings.queue) this.pending.length = this.settings.queue;
 								}
 							}
 

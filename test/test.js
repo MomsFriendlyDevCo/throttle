@@ -91,9 +91,15 @@ describe('@momsfriendlydevco/throttle', ()=> {
 					order.push(2);
 				},
 			})}) // Don't return and wait for this promise.
+			.then(() => {sut.throttle({
+				...options,
+				onLocked: () => {
+					console.log('onLocked', 3);
+					order.push(3);
+				},
+			})}) // Don't return and wait for this promise.
 			.then(() => sut.throttle(options))
-			// FIXME: Is this really the intended ordering? Not demonstrating "last" out.
-			.then(() => expect(order).to.have.ordered.members([1,2]));
+			.then(() => expect(order).to.have.ordered.members([3,1,2]));
 	});
 
 });
