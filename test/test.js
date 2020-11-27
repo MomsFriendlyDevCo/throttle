@@ -60,7 +60,7 @@ describe('@momsfriendlydevco/throttle', ()=> {
 			.then(() => expect(options.onLocked).to.have.been.called());
 	});
 
-	it('should fire onLocked in FILO order', ()=> {
+	it('should fire callbacks in FILO order', ()=> {
 		sut.settings.leading = false;
 		sut.settings.queue = 3;
 
