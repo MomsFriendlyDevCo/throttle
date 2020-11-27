@@ -32,13 +32,6 @@ let Throttle = class {
 	};
 
 	throttle(options) {
-		/*
-		this.settings = {
-			...this.settings,
-			..._.isPlainObject(options) ? options : {},
-		};
-		*/
-		//debug('throttle', this.settings, options);
 		debug('throttle', options.id, options.hash);
 
 		// TODO: validate options.hash
@@ -55,7 +48,6 @@ let Throttle = class {
 						if (didLock) { // New request - pass on middleware and wait until its concludes
 
 							// Callback for onUnlocked to release lock and finish queue.
-							// TODO: Use a promise instead. When it resolves the lock is released.
 							var done = () => {
 								debug('Releasing lock');
 								return this.lock.release(current.hash)
@@ -70,7 +62,6 @@ let Throttle = class {
 									})
 									.then(() => {
 										debug('Resolving promise', current.notes, _.isFunction(current.resolve));
-										// FIXME: We may have just resolved a promise another pending request is also waiting to resolve
 										current.resolve();
 									});
 							};
@@ -86,7 +77,6 @@ let Throttle = class {
 
 							// TODO: `settings.leading = true`, could be `settings.queue = 0`
 							if (this.settings.leading) {
-								//settings.response(req, res);
 								debug('Fire leading');
 								if (_.isFunction(current.onLocked)) current.onLocked.call(this);
 								debug('Resolving promise', current.notes, _.isFunction(current.resolve));
@@ -95,7 +85,6 @@ let Throttle = class {
 								// Respond to first pending when over queue length
 								while (this.pending.length >= this.settings.queue) {
 									debug('Fire pending', this.pending.length);
-									//settings.response(...pending.shift());
 									var item = this.pending.shift();
 									if (_.isFunction(item.onLocked)) item.onLocked.call(this);
 									item.resolve();
@@ -103,7 +92,6 @@ let Throttle = class {
 								if (this.settings.queue > 0) {
 									// Add request to pending
 									debug('Add to pending');
-									//pending.unshift([req, res, next]);
 									this.pending.unshift(current);
 									if (this.pending.length > this.settings.queue) this.pending.length = this.settings.queue;
 								} else {
@@ -112,7 +100,6 @@ let Throttle = class {
 									current.resolve();
 								}
 							}
-							//return Promise.resolve();
 
 						}
 
