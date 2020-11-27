@@ -95,7 +95,7 @@ let Throttle = class {
 									this.pending.unshift(current);
 									if (this.pending.length > this.settings.queue) this.pending.length = this.settings.queue;
 								} else {
-									// Queued items don't resolve right away
+									// Queued items don't resolve right away but others do
 									debug('Resolving promise', current.notes, _.isFunction(current.resolve));
 									current.resolve();
 								}
