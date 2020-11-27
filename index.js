@@ -88,11 +88,13 @@ let Throttle = class {
 							} else {
 								// Respond to first pending when over queue length
 								while (this.pending.length >= this.settings.queue) {
+									debug('Fire pending', this.pending.length);
 									//settings.response(...pending.shift());
 									this.pending.shift().call(this);
 								}
 								if (this.settings.queue > 0) {
 									// Add request to pending
+									debug('Add to pending');
 									//pending.unshift([req, res, next]);
 									if (_.isFunction(options.onLocked)) this.pending.unshift(options.onLocked);
 									this.pending.length = this.settings.queue;

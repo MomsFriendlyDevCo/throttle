@@ -54,4 +54,46 @@ describe('@momsfriendlydevco/throttle', ()=> {
 			.then(() => expect(options.onLocked).to.have.been.called());
 	});
 
+	it('should fire onLocked in FILO order', ()=> {
+		sut.settings.leading = false;
+		sut.settings.queue = 3;
+
+		var options = {
+			id: 'test',
+			hash: ({test: 'should fire onLocked in FILO order'}),
+			onUnlocked: (done) => {
+				console.log('onUnlocked', _.isFunction(done));
+				setTimeout(() => done(), 500);
+			},
+		};
+
+		var order = [];
+
+		return Promise.resolve()
+			.then(() => {sut.throttle({
+				...options,
+				onLocked: () => {
+					console.log('onLocked', 0);
+					order.push(0);
+				},
+			})}) // Don't return and wait for this promise.
+			.then(() => {sut.throttle({
+				...options,
+				onLocked: () => {
+					console.log('onLocked', 1);
+					order.push(1);
+				},
+			})}) // Don't return and wait for this promise.
+			.then(() => {sut.throttle({
+				...options,
+				onLocked: () => {
+					console.log('onLocked', 2);
+					order.push(2);
+				},
+			})}) // Don't return and wait for this promise.
+			.then(() => sut.throttle(options))
+			// FIXME: Is this really the intended ordering? Not demonstrating "last" out.
+			.then(() => expect(order).to.have.ordered.members([1,2]));
+	});
+
 });
