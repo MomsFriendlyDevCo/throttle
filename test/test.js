@@ -22,9 +22,9 @@ describe('@momsfriendlydevco/throttle', ()=> {
 			onLocked: () => {
 				console.log('onLocked');
 			},
-			onUnlocked: (done) => {
+			onUnlocked: () => {
 				console.log('onUnlocked');
-				done();
+				return Promise.resolve();
 			},
 		};
 		chai.spy.on(options, 'onUnlocked');
@@ -41,16 +41,22 @@ describe('@momsfriendlydevco/throttle', ()=> {
 			onLocked: () => {
 				console.log('onLocked');
 			},
-			onUnlocked: (done) => {
-				console.log('onUnlocked', _.isFunction(done));
-				setTimeout(() => done(), 500);
+			onUnlocked: () => {
+				console.log('onUnlocked');
+				return new Promise((resolve, reject) => {
+					setTimeout(() => {
+						console.log('Finished waiting');
+						resolve();
+					}, 250);
+				});
 			},
 		};
 		chai.spy.on(options, 'onLocked');
 
-		return Promise.resolve()
-			.then(() => {sut.throttle(options)}) // Don't return and wait for this promise.
-			.then(() => sut.throttle(options))
+		return Promise.all([
+				sut.throttle(_.clone(options)),
+				sut.throttle(_.clone(options)),
+			])
 			.then(() => expect(options.onLocked).to.have.been.called());
 	});
 
@@ -61,10 +67,6 @@ describe('@momsfriendlydevco/throttle', ()=> {
 		var options = {
 			id: 'test',
 			hash: ({test: 'should fire onLocked in FILO order'}),
-			onUnlocked: (done) => {
-				console.log('onUnlocked', _.isFunction(done));
-				setTimeout(() => done(), 500);
-			},
 		};
 
 		var order = [];
@@ -77,40 +79,121 @@ describe('@momsfriendlydevco/throttle', ()=> {
 					console.log('onLocked', 0);
 					order.push(0);
 				},
+				onUnlocked: () => {
+					console.log('onUnlocked', 0);
+					return new Promise((resolve, reject) => {
+						setTimeout(() => {
+							console.log('Finished waiting');
+							order.push(0);
+							resolve();
+						}, 250);
+					});
+				},
+				notes: 0,
 			})}) // Don't return and wait for this promise.
 			// Subsequent attempts are queued
-			.then(() => {sut.throttle({
-				...options,
-				onLocked: () => {
-					console.log('onLocked', 1);
-					order.push(1);
-				},
-			})}) // Don't return and wait for this promise.
-			.then(() => {sut.throttle({
-				...options,
-				onLocked: () => {
-					console.log('onLocked', 2);
-					order.push(2);
-				},
-			})}) // Don't return and wait for this promise.
-			// When the queue length is reached onLocked is executed.
-			.then(() => {sut.throttle({
-				...options,
-				onLocked: () => {
-					console.log('onLocked', 3);
-					order.push(3);
-				},
-			})}) // Don't return and wait for this promise.
-			.then(() => {sut.throttle({
-				...options,
-				onLocked: () => {
-					console.log('onLocked', 4);
-					order.push(4);
-				},
-			})}) // Don't return and wait for this promise.
-			.then(() => sut.throttle(options))
-			// TODO: What does this mean? 1 and 2 are never executed?
-			.then(() => expect(order).to.have.ordered.members([3,4]));
-	});
+			.then(() => Promise.all([
+				sut.throttle({
+					...options,
+					onLocked: () => {
+						console.log('onLocked', 1);
+						order.push(1);
+					},
+					onUnlocked: () => {
+						console.log('onUnlocked', 1);
+						return new Promise((resolve, reject) => {
+							setTimeout(() => {
+								console.log('Finished waiting');
+								order.push(1);
+								resolve();
+							}, 250);
+						});
+					},
+					notes: 1,
+				}),
+				sut.throttle({
+					...options,
+					onLocked: () => {
+						console.log('onLocked', 2);
+						order.push(2);
+					},
+					onUnlocked: () => {
+						console.log('onUnlocked', 2);
+						return new Promise((resolve, reject) => {
+							setTimeout(() => {
+								console.log('Finished waiting');
+								order.push(2);
+								resolve();
+							}, 250);
+						});
+					},
+					notes: 2,
+				}),
+				sut.throttle({
+					...options,
+					onLocked: () => {
+						console.log('onLocked', 3);
+						order.push(3);
+					},
+					onUnlocked: () => {
+						console.log('onUnlocked', 3);
+						return new Promise((resolve, reject) => {
+							setTimeout(() => {
+								console.log('Finished waiting');
+								order.push(3);
+								resolve();
+							}, 250);
+						});
+					},
+					notes: 3,
+				}),
+				sut.throttle({
+					...options,
+					onLocked: () => {
+						console.log('onLocked', 4);
+						order.push(4);
+					},
+					onUnlocked: () => {
+						console.log('onUnlocked', 4);
+						return new Promise((resolve, reject) => {
+							setTimeout(() => {
+								console.log('Finished waiting');
+								order.push(4);
+								resolve();
+							}, 250);
+						});
+					},
+					notes: 4,
+				}),
+				sut.throttle({
+					...options,
+					onLocked: () => {
+						console.log('onLocked', 5);
+						order.push(5);
+					},
+					onUnlocked: () => {
+						console.log('onUnlocked', 5);
+						return new Promise((resolve, reject) => {
+							setTimeout(() => {
+								console.log('Finished waiting');
+								order.push(5);
+								resolve();
+							}, 250);
+						});
+					},
+					notes: 5,
+				}),
+			]))
+			// This would be FIFO.
+			// 1,2 are executed when 3 and then 4 arrive
+			// 3,4 are left waiting
+			//.then(() => expect(order).to.have.ordered.members([1,2]));
+			// FILO.
+			// 3,4 are executed as they arrive
+			// 1,2 are left waiting until 
+			// 0 returns after some delay
+			// 5 is the last time, 2 and 1 remain to be processed
+			.then(() => expect(order).to.have.ordered.members([3, 4, 0, 5, 2, 1]));
+	}).timeout(15000);
 
 });
