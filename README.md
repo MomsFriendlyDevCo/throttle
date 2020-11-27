@@ -62,4 +62,4 @@ Attempt to create a lock, when successful `onUnlocked` will be called, otherwise
 | `id`             | `mixed` | undefined                             | Key within lock collection |
 | `hash`             | `string` | undefined                             | An object which uniquely identies the object being locked |
 | `onLocked`             | `function` | undefined                             | Callback which is executed when a lock already exists |
-| `onUnlocked`             | `function` | undefined                             | Callback which is executed when no lock is already existing |
+| `onUnlocked`             | `function` | undefined                             | Callback which is executed when no lock is already existing, should return a promise which is resolved when the task completes |
