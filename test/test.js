@@ -184,15 +184,11 @@ describe('@momsfriendlydevco/throttle', ()=> {
 					notes: 5,
 				}),
 			]))
-			// This would be FIFO.
-			// 1,2 are executed when 3 and then 4 arrive
-			// 3,4 are left waiting
-			//.then(() => expect(order).to.have.ordered.members([1,2]));
-			// FILO.
-			// 3,4 are executed as they arrive
+			// FILO. (With a queue length of 3).
+			// 3,4 are executed (dropped via onLocked) as they arrive
 			// 1,2 are left waiting until 
-			// 0 returns after some delay
-			// 5 is the last time, 2 and 1 remain to be processed
+			// 0 returns after some delay (when onUnlocked promise resolves)
+			// 5 is the last call, 2 and 1 remain to be processed (onUnlocked fired on each as the queue clears)
 			.then(() => expect(order).to.have.ordered.members([3, 4, 0, 5, 2, 1]));
 	}).timeout(15000);
 
