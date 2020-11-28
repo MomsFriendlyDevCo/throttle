@@ -16,6 +16,9 @@ describe('@momsfriendlydevco/throttle', ()=> {
 	after('destroy', ()=> sut.destroy());
 
 	it('should fire onUnlocked when available', ()=> {
+		//sut.settings.leading = false;
+		//sut.settings.queue = 0;
+
 		var options = {
 			id: 'test',
 			hash: ({test: 'should fire onUnlocked when available'}),
@@ -35,6 +38,9 @@ describe('@momsfriendlydevco/throttle', ()=> {
 	});
 
 	it('should fire onLocked when already requested', ()=> {
+		//sut.settings.leading = false;
+		//sut.settings.queue = 0;
+
 		var options = {
 			id: 'test',
 			hash: ({test: 'should fire onLocked when already requested'}),

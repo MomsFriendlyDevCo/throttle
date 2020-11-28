@@ -11,6 +11,8 @@ let Throttle = class {
 		};
 		debug('settings', this.settings);
 
+		if (this.settings.leading) this.settings.queue = 0;
+
 		// NOTE: We want this to be application wide.
 		// Implementation should be single instance.
 		// TODO: Should we return a "singleton" with `module.exports = new Throttle()`?
@@ -75,8 +77,7 @@ let Throttle = class {
 							}
 						} else { // Already locked - execute response() and exit
 
-							// TODO: `settings.leading = true`, could be `settings.queue = 0`
-							if (this.settings.leading) {
+							if (this.settings.queue === 0) {
 								debug('Fire leading');
 								if (_.isFunction(current.onLocked)) current.onLocked.call(this);
 								debug('Resolving promise', current.notes, _.isFunction(current.resolve));
