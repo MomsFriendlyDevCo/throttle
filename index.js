@@ -56,7 +56,7 @@ let Throttle = class {
 										if (this.pending.length > 0) {
 											// Execute next pending request
 											debug('Handling next pending');
-											// FIXME: Call stack depth?
+											// FIXME: Call stack depth? Decouple with setTimeout?
 											return handler(this.pending.shift());
 										}
 									})

@@ -66,7 +66,7 @@ describe('@momsfriendlydevco/throttle', ()=> {
 
 		var options = {
 			id: 'test',
-			hash: ({test: 'should fire onLocked in FILO order'}),
+			hash: ({test: 'should fire callbacks in FILO order'}),
 		};
 
 		var order = [];
@@ -186,7 +186,7 @@ describe('@momsfriendlydevco/throttle', ()=> {
 			]))
 			// FILO. (With a queue length of 3).
 			// 3,4 are executed (dropped via onLocked) as they arrive
-			// 1,2 are left waiting until 
+			// 1,2 are left waiting until...
 			// 0 returns after some delay (when onUnlocked promise resolves)
 			// 5 is the last call, 2 and 1 remain to be processed (onUnlocked fired on each as the queue clears)
 			.then(() => expect(order).to.have.ordered.members([3, 4, 0, 5, 2, 1]));
