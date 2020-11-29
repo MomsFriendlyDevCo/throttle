@@ -16,7 +16,6 @@ let Throttle = class {
 		// NOTE: We want this to be application wide.
 		// Implementation should be single instance.
 		// TODO: Should we return a "singleton" with `module.exports = new Throttle()`?
-		// TODO: Should queue be by hash?
 		this.pending = [];
 
 		this.lock = new Lock(this.settings.lock);
@@ -33,14 +32,16 @@ let Throttle = class {
 		return this.lock.destroy();
 	};
 
-	throttle(options) {
-		debug('throttle', options.id, options.hash);
+	throttle(worker, options) {
+		debug('throttle', _.isFunction(worker), options.id, options.hash);
 
 		// TODO: validate options.hash
 		return new Promise((resolve, reject) => {
 			var handler = current => {
 				// Store callback so that pending promises can be resolved later
+				if (!_.isFunction(current.worker)) current.worker = worker;
 				if (!_.isFunction(current.resolve)) current.resolve = resolve;
+				if (!_.isFunction(current.reject)) current.reject = reject;
 				//debug('Current', current);
 
 				Promise.resolve()
@@ -59,7 +60,8 @@ let Throttle = class {
 											// Execute next pending request
 											debug('Handling next pending');
 											// FIXME: Call stack depth? Decouple with setTimeout?
-											return handler(this.pending.shift());
+											// No need to return this promise as current is not waiting for other pending promises.
+											handler(this.pending.shift());
 										}
 									})
 									.then(() => {
@@ -69,9 +71,9 @@ let Throttle = class {
 							};
 
 							// Proceed with current item
-							debug('Calling onUnlocked', _.isFunction(current.onUnlocked));
-							if (_.isFunction(current.onUnlocked)) {
-								current.onUnlocked.call(this).then(() => done());
+							debug('Calling worker', _.isFunction(current.worker));
+							if (_.isFunction(current.worker)) {
+								current.worker.call(this).then(() => done());
 							} else {
 								done();
 							}
@@ -79,27 +81,20 @@ let Throttle = class {
 
 							if (this.settings.queue === 0) {
 								debug('Fire leading');
-								if (_.isFunction(current.onLocked)) current.onLocked.call(this);
-								debug('Resolving promise', current.notes, _.isFunction(current.resolve));
-								current.resolve();
+								debug('Rejecting promise', current.notes, _.isFunction(current.reject));
+								current.reject(new Error('Throttle queue is full'));
 							} else {
 								// Respond to first pending when over queue length
 								while (this.pending.length >= this.settings.queue) {
 									debug('Fire pending', this.pending.length);
 									var item = this.pending.shift();
-									if (_.isFunction(item.onLocked)) item.onLocked.call(this);
-									item.resolve();
+									debug('Rejecting promise', item.notes, _.isFunction(item.reject));
+									item.reject(new Error('Throttle queue is full'));
 								}
-								if (this.settings.queue > 0) {
-									// Add request to pending
-									debug('Add to pending');
-									this.pending.unshift(current);
-									if (this.pending.length > this.settings.queue) this.pending.length = this.settings.queue;
-								} else {
-									// Queued items don't resolve right away but others do
-									debug('Resolving promise', current.notes, _.isFunction(current.resolve));
-									current.resolve();
-								}
+								// Add request to pending
+								debug('Add to pending');
+								this.pending.unshift(current);
+								if (this.pending.length > this.settings.queue) this.pending.length = this.settings.queue;
 							}
 
 						}
@@ -110,6 +105,7 @@ let Throttle = class {
 
 			handler(options);
 		});
+
 	};
 };
 
