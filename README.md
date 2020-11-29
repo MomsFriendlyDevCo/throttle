@@ -53,13 +53,11 @@ throttler.init(settings)
 Check all settings and connect to the database.
 
 
-throttler.throttle(options)
+throttler.throttle(worker, options)
 ----------------------------------
-Attempt to create a lock, when successful `onUnlocked` will be called, otherwise `onLocked`.
+Callback `worker` will be called immediately if a lock is available or otherwise throttled in a queue. When queue is full promise will be rejected with error `"Throttle queue is full"`.
 
 | Option              | Type     | Default                            | Description                                     |
 |----------------------|----------|------------------------------------|-------------------------------------------------|
 | `id`             | `mixed` | undefined                             | Key within lock collection |
 | `hash`             | `string` | undefined                             | An object which uniquely identies the object being locked |
-| `onLocked`             | `function` | undefined                             | Callback which is executed when a lock already exists |
-| `onUnlocked`             | `function` | undefined                             | Callback which is executed when no lock is already existing, should return a promise which is resolved when the task completes |
