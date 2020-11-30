@@ -9,7 +9,7 @@ let Throttle = class {
 			...Throttle.defaults,
 			..._.isPlainObject(options) ? options : {},
 		};
-		debug('settings', this.settings);
+		//debug('settings', this.settings);
 
 		if (this.settings.leading) this.settings.queue = 0;
 
@@ -18,12 +18,26 @@ let Throttle = class {
 		// TODO: Should we return a "singleton" with `module.exports = new Throttle()`?
 		this.pending = [];
 
-		this.lock = new Lock(this.settings.lock);
+		// Support passing in an existing Lock instance.
+		if (_.has(this.settings, 'lock.settings.mongodb') && _.has(this.settings, 'lock.model')) {
+			debug('Using existing Lock instance');
+			this.lock = this.settings.lock;
+		} else {
+			debug('Creating Lock instance');
+			this.lock = new Lock(this.settings.lock);
+		}
 	};
 
 	init() {
 		debug('init');
-		return this.lock.init();
+		// Support passing in an existing Lock instance.
+		if (_.has(this.settings, 'lock.settings.mongodb') && _.has(this.settings, 'lock.model')) {
+			debug('No need to initialise existing Lock instance');
+			return Promise.resolve();
+		} else {
+			debug('Initialising Lock instance');
+			return this.lock.init();
+		}
 	};
 
 	// TODO: hook up.
