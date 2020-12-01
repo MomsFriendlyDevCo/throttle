@@ -7,16 +7,18 @@ var Throttle = require('@momsfriendlydevco/throttle');
 
 var throttler = new Throttle();
 throttler.init()
-	.then(()=> throttler.throttle({
-		id: 'foo',
-		hash: ({foo: 'bar'}),
-		onLocked: () => {
-			// Already in progress.
+	.then(()=> throttler.throttle(() => {
+			// Worker is complete when promise resolves
+			return Promise.resolve();
 		},
-		onUnlocked: (done) => {
-			done(); // Release lock and execute last instance
-		},
-	}));
+		{
+			id: 'foo',
+			hash: ({foo: 'bar'}),
+		}
+	))
+	.catch(e => {
+		// The queue full of workers already in progress.
+	});
 ```
 
 
