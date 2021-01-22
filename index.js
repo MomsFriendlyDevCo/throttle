@@ -4,7 +4,7 @@ const Lock = require('@momsfriendlydevco/lock');
 const { resolve } = require('path');
 
 // {{{ Test if config is a Lock instance.
-const isLock = (obj) => {
+const isLock = obj => {
 	//(_.has(this.settings, 'lock.settings.mongodb') && _.has(this.settings, 'lock.model'))
 	// TODO: Could create a new Lock() and test it's keys rather than this hardcoded list.
 	var keys = [
@@ -17,7 +17,7 @@ const isLock = (obj) => {
 		'destroy',  'schema',
 		'model'
 	];
-	return (_.intersection(Object.keys(obj), keys).length === keys.length);
+	return (obj && _.isObject(obj) && _.intersection(Object.keys(obj), keys).length === keys.length);
 };
 // }}}
 
