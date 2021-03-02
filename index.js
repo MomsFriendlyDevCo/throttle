@@ -1,25 +1,6 @@
 const _ = require('lodash');
 const debug = require('debug')('throttle:main');
 const Lock = require('@momsfriendlydevco/lock');
-const { resolve } = require('path');
-
-// {{{ Test if config is a Lock instance.
-const isLock = obj => {
-	//(_.has(this.settings, 'lock.settings.mongodb') && _.has(this.settings, 'lock.model'))
-	// TODO: Could create a new Lock() and test it's keys rather than this hardcoded list.
-	var keys = [
-		'settings', 'set',
-		'init',     'get',
-		'exists',   'create',
-		'update',   'release',
-		'clean',    'clear',
-		'alive',    'hash',
-		'destroy',  'schema',
-		'model'
-	];
-	return (obj && _.isObject(obj) && _.intersection(Object.keys(obj), keys).length === keys.length);
-};
-// }}}
 
 let Throttle = class {
 	constructor(options) {
@@ -37,7 +18,7 @@ let Throttle = class {
 		this.pending = [];
 
 		// Support passing in an existing Lock instance.
-		if (isLock(this.settings.lock)) {
+		if (this.settings.lock instanceof Lock) {
 			debug('Using existing Lock instance');
 			this.lock = this.settings.lock;
 		} else {
@@ -49,7 +30,7 @@ let Throttle = class {
 	init() {
 		debug('init');
 		// Support passing in an existing Lock instance.
-		if (isLock(this.settings.lock)) {
+		if (this.settings.lock instanceof Lock) {
 			debug('No need to initialise existing Lock instance');
 			return Promise.resolve();
 		} else {
