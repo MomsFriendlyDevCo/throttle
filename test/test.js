@@ -2,15 +2,14 @@ var _ = require('lodash');
 var chai = require('chai')
 var spies = require('chai-spies');
 var chaiAsPromised = require("chai-as-promised");
-//var mlog = require('mocha-logger');
+var mlog = require('mocha-logger');
 
 chai.use(spies);
 chai.use(chaiAsPromised);
 var expect = chai.expect;
 
 var Sut = require('..');
-//const { resolve } = require('path');
-//const { promises } = require('fs');
+const Lock = require('@momsfriendlydevco/lock');
 
 describe('@momsfriendlydevco/throttle', ()=> {
 	var sut;
@@ -43,10 +42,10 @@ describe('@momsfriendlydevco/throttle', ()=> {
 
 		var promises = [
 			sut.throttle(() => {
-				console.log('onUnlocked', 0);
+				mlog.log('onUnlocked', 0);
 				return new Promise((resolve, reject) => {
 					setTimeout(() => {
-						console.log('Finished waiting', 0);
+						mlog.log('Finished waiting', 0);
 						resolve();
 					}, 250);
 				});
@@ -74,10 +73,10 @@ describe('@momsfriendlydevco/throttle', ()=> {
 			// This first attempt creates a lock
 			.then(() => {
 				sut.throttle(() => {
-					console.log('onUnlocked', 0);
+					mlog.log('onUnlocked', 0);
 					return new Promise((resolve, reject) => {
 						setTimeout(() => {
-							console.log('Finished waiting');
+							mlog.log('Finished waiting');
 							order.push(0);
 							resolve();
 						}, 250);
@@ -86,17 +85,17 @@ describe('@momsfriendlydevco/throttle', ()=> {
 					...options,
 					notes: 0,
 				}).catch(() => {
-					console.log('onLocked', 0);
+					mlog.log('onLocked', 0);
 					order.push(0);
 				});
 			}) // Don't return and wait for this promise.
 			// Subsequent attempts are queued
 			.then(() => Promise.all([
 				sut.throttle(() => {
-						console.log('onUnlocked', 1);
+						mlog.log('onUnlocked', 1);
 						return new Promise((resolve, reject) => {
 							setTimeout(() => {
-								console.log('Finished waiting');
+								mlog.log('Finished waiting');
 								order.push(1);
 								resolve();
 							}, 250);
@@ -106,14 +105,14 @@ describe('@momsfriendlydevco/throttle', ()=> {
 						notes: 1,
 					})
 					.catch(() => {
-						console.log('onLocked', 1);
+						mlog.log('onLocked', 1);
 						order.push(1);
 					}),
 				sut.throttle(() => {
-						console.log('onUnlocked', 2);
+						mlog.log('onUnlocked', 2);
 						return new Promise((resolve, reject) => {
 							setTimeout(() => {
-								console.log('Finished waiting');
+								mlog.log('Finished waiting');
 								order.push(2);
 								resolve();
 							}, 250);
@@ -123,14 +122,14 @@ describe('@momsfriendlydevco/throttle', ()=> {
 						notes: 2,
 					})
 					.catch(() => {
-						console.log('onLocked', 2);
+						mlog.log('onLocked', 2);
 						order.push(2);
 					}),
 				sut.throttle(() => {
-						console.log('onUnlocked', 3);
+						mlog.log('onUnlocked', 3);
 						return new Promise((resolve, reject) => {
 							setTimeout(() => {
-								console.log('Finished waiting');
+								mlog.log('Finished waiting');
 								order.push(3);
 								resolve();
 							}, 250);
@@ -140,14 +139,14 @@ describe('@momsfriendlydevco/throttle', ()=> {
 						notes: 3,
 					})
 					.catch(() => {
-						console.log('onLocked', 3);
+						mlog.log('onLocked', 3);
 						order.push(3);
 					}),
 				sut.throttle(() => {
-						console.log('onUnlocked', 4);
+						mlog.log('onUnlocked', 4);
 						return new Promise((resolve, reject) => {
 							setTimeout(() => {
-								console.log('Finished waiting');
+								mlog.log('Finished waiting');
 								order.push(4);
 								resolve();
 							}, 250);
@@ -157,14 +156,14 @@ describe('@momsfriendlydevco/throttle', ()=> {
 						notes: 4,
 					})
 					.catch(() => {
-						console.log('onLocked', 4);
+						mlog.log('onLocked', 4);
 						order.push(4);
 					}),
 				sut.throttle(() => {
-						console.log('onUnlocked', 5);
+						mlog.log('onUnlocked', 5);
 						return new Promise((resolve, reject) => {
 							setTimeout(() => {
-								console.log('Finished waiting');
+								mlog.log('Finished waiting');
 								order.push(5);
 								resolve();
 							}, 250);
@@ -174,7 +173,7 @@ describe('@momsfriendlydevco/throttle', ()=> {
 						notes: 5,
 					})
 					.catch(() => {
-						console.log('onLocked', 5);
+						mlog.log('onLocked', 5);
 						order.push(5);
 					}),
 			]))
@@ -185,5 +184,12 @@ describe('@momsfriendlydevco/throttle', ()=> {
 			// 5 is the last call, 2 and 1 remain to be processed (onUnlocked fired on each as the queue clears)
 			.then(() => expect(order).to.have.ordered.members([3, 4, 0, 5, 2, 1]));
 	}).timeout(5000);
+
+	it('should support passing in existing Lock instance', ()=> {
+		sut = new Sut({
+			lock: new Lock()
+		});
+		expect(sut.settings.lock).to.be.an.instanceof(Lock);
+	});
 
 });
