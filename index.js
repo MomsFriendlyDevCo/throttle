@@ -2,7 +2,11 @@ const _ = require('lodash');
 const debug = require('debug')('throttle:main');
 const Lock = require('@momsfriendlydevco/lock');
 
-let Throttle = class {
+// Fall-back method when instanceof fails to match.
+// This may be required during local development when @doop/locking and @doop/throttle result in @momsfriendlydevco/lock being loaded from different paths.
+const isLock = lock => Object.keys(new Lock()).every(i => Object.keys(lock).includes(i));
+
+const Throttle = class {
 	constructor(options) {
 		this.settings = {
 			...Throttle.defaults,
@@ -18,7 +22,7 @@ let Throttle = class {
 		this.pending = [];
 
 		// Support passing in an existing Lock instance.
-		if (this.settings.lock instanceof Lock) {
+		if (this.settings.lock instanceof Lock || isLock(this.settings.lock)) {
 			debug('Using existing Lock instance');
 			this.lock = this.settings.lock;
 		} else {
@@ -30,7 +34,7 @@ let Throttle = class {
 	init() {
 		debug('init');
 		// Support passing in an existing Lock instance.
-		if (this.settings.lock instanceof Lock) {
+		if (this.settings.lock instanceof Lock || isLock(this.settings.lock)) {
 			debug('No need to initialise existing Lock instance');
 			return Promise.resolve();
 		} else {
